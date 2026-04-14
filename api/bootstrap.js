@@ -41,7 +41,7 @@ function mapLibraryItem(page) {
 }
 
 function computeHistory(logEntries) {
-  // Group by exercise name → { date → [tWeights] }
+  // Group by exercise name → { date → { tWeights, cWeights } }
   const byExercise = {};
 
   for (const page of logEntries) {
@@ -50,30 +50,48 @@ function computeHistory(logEntries) {
     if (!name) continue;
 
     const dateStr = getDate(p, 'Date');
+    // Skip entries without a valid date to avoid null keys skewing sort order
+    if (!dateStr) continue;
+
     // "T Weight " has a trailing space — exact property name required
     const tWeight = getNumber(p, 'T Weight ');
-    if (tWeight == null) continue;
+    // "C Weight" — no trailing space
+    const cWeight = getNumber(p, 'C Weight');
+
+    if (tWeight == null && cWeight == null) continue;
 
     if (!byExercise[name]) byExercise[name] = {};
-    if (!byExercise[name][dateStr]) byExercise[name][dateStr] = [];
-    byExercise[name][dateStr].push(tWeight);
+    if (!byExercise[name][dateStr]) byExercise[name][dateStr] = { tWeights: [], cWeights: [] };
+    if (tWeight != null) byExercise[name][dateStr].tWeights.push(tWeight);
+    if (cWeight != null) byExercise[name][dateStr].cWeights.push(cWeight);
   }
 
   const history = {};
   for (const [name, dateMap] of Object.entries(byExercise)) {
-    const allWeights = Object.values(dateMap).flat();
-    const allTimeMax = allWeights.length ? Math.max(...allWeights) : null;
+    const allTWeights = Object.values(dateMap).flatMap((d) => d.tWeights);
+    const allCWeights = Object.values(dateMap).flatMap((d) => d.cWeights);
+    const tAllTimeMax = allTWeights.length ? Math.max(...allTWeights) : null;
+    const cAllTimeMax = allCWeights.length ? Math.max(...allCWeights) : null;
 
-    // Find most recent date that has data
-    const sortedDates = Object.keys(dateMap)
-      .filter(Boolean)
+    // Find most recent date with T Weight data (independent of C Weight dates)
+    const sortedTDates = Object.keys(dateMap)
+      .filter((d) => dateMap[d].tWeights.length > 0)
       .sort()
       .reverse();
-    const lastMax = sortedDates.length
-      ? Math.max(...dateMap[sortedDates[0]])
+    const tLastMax = sortedTDates.length
+      ? Math.max(...dateMap[sortedTDates[0]].tWeights)
       : null;
 
-    history[name] = { lastMax, allTimeMax };
+    // Find most recent date with C Weight data (independent of T Weight dates)
+    const sortedCDates = Object.keys(dateMap)
+      .filter((d) => dateMap[d].cWeights.length > 0)
+      .sort()
+      .reverse();
+    const cLastMax = sortedCDates.length
+      ? Math.max(...dateMap[sortedCDates[0]].cWeights)
+      : null;
+
+    history[name] = { tLastMax, tAllTimeMax, cLastMax, cAllTimeMax };
   }
 
   return history;

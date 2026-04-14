@@ -4,17 +4,17 @@ export default function ExerciseCard({ exercise, history, allExercises, onChange
   const [showExtra, setShowExtra] = useState(false);
 
   const hist = history?.[exercise.exercise] ?? null;
-  const lastMax = hist?.lastMax ?? null;
-  const allTimeMax = hist?.allTimeMax ?? null;
+  const tLastMax = hist?.tLastMax ?? null;
+  const tAllTimeMax = hist?.tAllTimeMax ?? null;
+  const cLastMax = hist?.cLastMax ?? null;
+  const cAllTimeMax = hist?.cAllTimeMax ?? null;
 
   function set(field, value) {
     onChange({ ...exercise, [field]: value });
   }
 
-  const histNote =
-    lastMax != null || allTimeMax != null
-      ? `Last: ${lastMax ?? '—'} · Max: ${allTimeMax ?? '—'}`
-      : null;
+  const tHistNote = `Last: ${tLastMax ?? '—'} · Max: ${tAllTimeMax ?? '—'}`;
+  const cHistNote = `Last: ${cLastMax ?? '—'} · Max: ${cAllTimeMax ?? '—'}`;
 
   return (
     <div className="exercise-card">
@@ -80,7 +80,19 @@ export default function ExerciseCard({ exercise, history, allExercises, onChange
             value={exercise.tWeight ?? ''}
             onChange={(e) => set('tWeight', e.target.value)}
           />
-          {histNote && <span className="hist-note">{histNote}</span>}
+          <span className="hist-note">{tHistNote}</span>
+        </div>
+        <div className="card-field">
+          <label className="field-label">C Weight</label>
+          <input
+            className="field-input small"
+            type="number"
+            min="0"
+            step="0.5"
+            value={exercise.cWeight ?? ''}
+            onChange={(e) => set('cWeight', e.target.value)}
+          />
+          <span className="hist-note">{cHistNote}</span>
         </div>
       </div>
 

@@ -98,7 +98,8 @@ Vercel automatically serves `/api/*.js` files as serverless functions.
 ## Known Caveats
 
 - **`T Weight ` trailing space** — Notion property name has a trailing space. This is intentional and must be preserved exactly in all API calls (`api/log.js` and `api/bootstrap.js`).
-- **Exercise Log pagination** — `GET /api/bootstrap` fetches all pages of the Exercise Log using cursor-based pagination to ensure `lastMax` / `allTimeMax` history is computed from the full dataset.
+- **`C Weight` no trailing space** — Notion property name has no trailing space. Must be used verbatim.
+- **Exercise Log pagination** — `GET /api/bootstrap` fetches all pages of the Exercise Log using cursor-based pagination to ensure `tLastMax` / `tAllTimeMax` / `cLastMax` / `cAllTimeMax` history is computed from the full dataset.
 - **Exercise Library pagination** — Also handled, though unlikely to exceed 100 entries.
 - **Placeholder icons** — `public/icon-192.png` and `public/icon-512.png` are minimal placeholder PNGs. Replace with real artwork before going to production.
 - **No authentication** — The app is public. Protect by restricting the Vercel deployment URL if needed.
