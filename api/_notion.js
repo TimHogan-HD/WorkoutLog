@@ -1,4 +1,4 @@
-// Shared Notion API helper for server-side use only.
+// Shared Notion API helper for server-side use only (Notion API 2025-09-03).
 const NOTION_VERSION = '2025-09-03';
 const BASE_URL = 'https://api.notion.com/v1';
 
@@ -10,58 +10,68 @@ export function notionHeaders() {
   };
 }
 
-export async function notionQuery(databaseId, body = {}, cursor = null) {
+async function notionFetch(path, body) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers: notionHeaders(),
+    body: JSON.stringify(body ?? {}),
+  });
+
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+
+  if (!res.ok) {
+    const msg =
+      data?.message ||
+      data?.error ||
+      `Notion request failed (${res.status})`;
+    throw new Error(`${msg} [${path}]`);
+  }
+
+  return data;
+}
+
+/**
+ * Query a DATA SOURCE (new API), not a database.
+ */
+export async function notionQuery(dataSourceId, body = {}, cursor = null) {
   const payload = { ...body };
   if (cursor) payload.start_cursor = cursor;
 
-  const res = await fetch(`${BASE_URL}/databases/${databaseId}/query`, {
-    method: 'POST',
-    headers: notionHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Notion query failed (${res.status}): ${text}`);
-  }
-
-  return res.json();
+  return notionFetch(`/data-sources/${dataSourceId}/query`, payload);
 }
 
-export async function notionQueryAll(databaseId, body = {}) {
+export async function notionQueryAll(dataSourceId, body = {}) {
   const results = [];
   let cursor = null;
   let hasMore = true;
 
   while (hasMore) {
-    const data = await notionQuery(databaseId, body, cursor);
+    const data = await notionQuery(dataSourceId, body, cursor);
     results.push(...(data.results || []));
-    hasMore = data.has_more;
+    hasMore = !!data.has_more;
     cursor = data.next_cursor;
   }
 
   return results;
 }
 
-export async function notionCreate(parentDatabaseId, properties) {
-  const res = await fetch(`${BASE_URL}/pages`, {
-    method: 'POST',
-    headers: notionHeaders(),
-    body: JSON.stringify({
-      parent: { database_id: parentDatabaseId },
-      properties,
-    }),
+/**
+ * Create page in a DATA SOURCE (new API).
+ */
+export async function notionCreate(parentDataSourceId, properties) {
+  return notionFetch(`/pages`, {
+    parent: { data_source_id: parentDataSourceId },
+    properties,
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Notion create failed (${res.status}): ${text}`);
-  }
-
-  return res.json();
 }
 
-// ── Property access helpers ──────────────────────────────────────────────────
+// ── Property access helpers ───────────────────────────────────────────────
 
 export function getSelect(props, key) {
   return props?.[key]?.select?.name ?? null;
