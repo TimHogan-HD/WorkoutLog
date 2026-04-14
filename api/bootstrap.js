@@ -41,7 +41,7 @@ function mapLibraryItem(page) {
 }
 
 function computeHistory(logEntries) {
-  // Group by exercise name → { date → [tWeights] }
+  // Group by exercise name → { date → { tWeights, cWeights } }
   const byExercise = {};
 
   for (const page of logEntries) {
@@ -52,28 +52,38 @@ function computeHistory(logEntries) {
     const dateStr = getDate(p, 'Date');
     // "T Weight " has a trailing space — exact property name required
     const tWeight = getNumber(p, 'T Weight ');
-    if (tWeight == null) continue;
+    // "C Weight" — no trailing space
+    const cWeight = getNumber(p, 'C Weight');
+
+    if (tWeight == null && cWeight == null) continue;
 
     if (!byExercise[name]) byExercise[name] = {};
-    if (!byExercise[name][dateStr]) byExercise[name][dateStr] = [];
-    byExercise[name][dateStr].push(tWeight);
+    if (!byExercise[name][dateStr]) byExercise[name][dateStr] = { tWeights: [], cWeights: [] };
+    if (tWeight != null) byExercise[name][dateStr].tWeights.push(tWeight);
+    if (cWeight != null) byExercise[name][dateStr].cWeights.push(cWeight);
   }
 
   const history = {};
   for (const [name, dateMap] of Object.entries(byExercise)) {
-    const allWeights = Object.values(dateMap).flat();
-    const allTimeMax = allWeights.length ? Math.max(...allWeights) : null;
+    const allTWeights = Object.values(dateMap).flatMap((d) => d.tWeights);
+    const allCWeights = Object.values(dateMap).flatMap((d) => d.cWeights);
+    const tAllTimeMax = allTWeights.length ? Math.max(...allTWeights) : null;
+    const cAllTimeMax = allCWeights.length ? Math.max(...allCWeights) : null;
 
     // Find most recent date that has data
     const sortedDates = Object.keys(dateMap)
       .filter(Boolean)
       .sort()
       .reverse();
-    const lastMax = sortedDates.length
-      ? Math.max(...dateMap[sortedDates[0]])
+
+    const tLastMax = sortedDates.length && dateMap[sortedDates[0]].tWeights.length
+      ? Math.max(...dateMap[sortedDates[0]].tWeights)
+      : null;
+    const cLastMax = sortedDates.length && dateMap[sortedDates[0]].cWeights.length
+      ? Math.max(...dateMap[sortedDates[0]].cWeights)
       : null;
 
-    history[name] = { lastMax, allTimeMax };
+    history[name] = { tLastMax, tAllTimeMax, cLastMax, cAllTimeMax };
   }
 
   return history;

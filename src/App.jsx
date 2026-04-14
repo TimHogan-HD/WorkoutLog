@@ -24,7 +24,7 @@ function defaultHeader(sessionType) {
 }
 
 function emptyExercise() {
-  return { exercise: '', sets: '', reps: '', tWeight: '', rpe: '', notes: '', superset: null, loadIntensity: null };
+  return { exercise: '', sets: '', reps: '', tWeight: '', cWeight: '', rpe: '', notes: '', superset: null, loadIntensity: null };
 }
 
 function emptyClimb() {
@@ -37,6 +37,7 @@ function libraryToCards(items) {
     sets: item.sets ?? '',
     reps: item.reps ?? '',
     tWeight: '',
+    cWeight: '',
     rpe: '',
     notes: '',
     superset: item.superset ?? null,
