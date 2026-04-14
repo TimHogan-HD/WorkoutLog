@@ -50,6 +50,9 @@ function computeHistory(logEntries) {
     if (!name) continue;
 
     const dateStr = getDate(p, 'Date');
+    // Skip entries without a valid date to avoid null keys skewing sort order
+    if (!dateStr) continue;
+
     // "T Weight " has a trailing space — exact property name required
     const tWeight = getNumber(p, 'T Weight ');
     // "C Weight" — no trailing space
@@ -70,17 +73,22 @@ function computeHistory(logEntries) {
     const tAllTimeMax = allTWeights.length ? Math.max(...allTWeights) : null;
     const cAllTimeMax = allCWeights.length ? Math.max(...allCWeights) : null;
 
-    // Find most recent date that has data
-    const sortedDates = Object.keys(dateMap)
-      .filter(Boolean)
+    // Find most recent date with T Weight data (independent of C Weight dates)
+    const sortedTDates = Object.keys(dateMap)
+      .filter((d) => dateMap[d].tWeights.length > 0)
       .sort()
       .reverse();
-
-    const tLastMax = sortedDates.length && dateMap[sortedDates[0]].tWeights.length
-      ? Math.max(...dateMap[sortedDates[0]].tWeights)
+    const tLastMax = sortedTDates.length
+      ? Math.max(...dateMap[sortedTDates[0]].tWeights)
       : null;
-    const cLastMax = sortedDates.length && dateMap[sortedDates[0]].cWeights.length
-      ? Math.max(...dateMap[sortedDates[0]].cWeights)
+
+    // Find most recent date with C Weight data (independent of T Weight dates)
+    const sortedCDates = Object.keys(dateMap)
+      .filter((d) => dateMap[d].cWeights.length > 0)
+      .sort()
+      .reverse();
+    const cLastMax = sortedCDates.length
+      ? Math.max(...dateMap[sortedCDates[0]].cWeights)
       : null;
 
     history[name] = { tLastMax, tAllTimeMax, cLastMax, cAllTimeMax };
