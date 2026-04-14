@@ -43,7 +43,7 @@ export async function notionQuery(dataSourceId, body = {}, cursor = null) {
   const payload = { ...body };
   if (cursor) payload.start_cursor = cursor;
 
-  return notionFetch(`/data-sources/${dataSourceId}/query`, payload);
+  return notionFetch(`/data_sources/${dataSourceId}/query`, payload);
 }
 
 export async function notionQueryAll(dataSourceId, body = {}) {
