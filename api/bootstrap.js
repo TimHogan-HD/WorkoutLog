@@ -8,9 +8,9 @@ import {
   getDate,
 } from './_notion.js';
 
-// Notion database page IDs
-const LIBRARY_DB_ID = 'd2b13aa6657441bfb331da49b9e464bf';
-const EXERCISE_LOG_DB_ID = '74478a97f7604058b6f15fb4ce130df6';
+// Notion data source IDs
+const LIBRARY_DB_ID = 'dae564a6-44ca-410b-8681-54ac81f777cc';
+const EXERCISE_LOG_DB_ID = '2cbdfa46-a6ad-4be1-b174-67d629e513dc';
 
 // Map Notion session values → UI session keys
 const SESSION_MAP = {
