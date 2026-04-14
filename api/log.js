@@ -1,8 +1,8 @@
 import { notionCreate } from './_notion.js';
 
-// Notion database page IDs
-const MASTER_TRACKER_DB_ID = '157066192ca843a0836440a9d43a7222';
-const EXERCISE_LOG_DB_ID = '74478a97f7604058b6f15fb4ce130df6';
+// Notion data source IDs
+const MASTER_TRACKER_DB_ID = 'f2b6c093-c2cb-4c91-bc81-30ab5441e0b5';
+const EXERCISE_LOG_DB_ID = '2cbdfa46-a6ad-4be1-b174-67d629e513dc';
 
 // Normalize sessionType: accept string or string[] and return a single key string.
 function normalizeSessionType(sessionType) {
