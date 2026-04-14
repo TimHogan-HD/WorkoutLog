@@ -1,5 +1,5 @@
 // Shared Notion API helper for server-side use only.
-const NOTION_VERSION = '2022-06-28';
+const NOTION_VERSION = '2025-09-03';
 const BASE_URL = 'https://api.notion.com/v1';
 
 export function notionHeaders() {
