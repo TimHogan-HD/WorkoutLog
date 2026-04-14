@@ -121,8 +121,7 @@ export default function App() {
     try {
       await postLog({ header, exercises: cards });
       setSubmitSuccess(true);
-      // Reset form: deselect session, keep date
-      const today = todayISO();
+      // Reset form: deselect session and reset header to today's defaults
       setSelectedSession(null);
       setCards([]);
       setHeader(defaultHeader(null));

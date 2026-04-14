@@ -4,11 +4,18 @@ import { notionCreate } from './_notion.js';
 const MASTER_TRACKER_DB_ID = '157066192ca843a0836440a9d43a7222';
 const EXERCISE_LOG_DB_ID = '74478a97f7604058b6f15fb4ce130df6';
 
+// Normalize sessionType: accept string or string[] and return a single key string.
+function normalizeSessionType(sessionType) {
+  if (Array.isArray(sessionType)) return sessionType[0] ?? '';
+  return sessionType ?? '';
+}
+
 // Map UI session keys → Notion session value
-function toNotionSession(sessionKey) {
-  if (sessionKey === 'D-S' || sessionKey === 'D-H') return 'D';
-  if (sessionKey === 'Climb') return 'Climb';
-  return sessionKey; // A, B, C
+function toNotionSession(sessionType) {
+  const key = normalizeSessionType(sessionType);
+  if (key === 'D-S' || key === 'D-H') return 'D';
+  if (key === 'Climb') return 'Climb';
+  return key; // A, B, C
 }
 
 function safeNumber(val) {
@@ -33,7 +40,7 @@ function buildMasterProperties(header) {
   }
 
   if (sessionNotionVal) {
-    props['Session Type'] = { select: { name: sessionNotionVal } };
+    props['Session Type'] = { multi_select: [{ name: sessionNotionVal }] };
   }
 
   const timeMin = safeNumber(header.timeMin);
@@ -80,7 +87,14 @@ function buildExerciseProperties(ex, header) {
   const tWeight = safeNumber(ex.tWeight);
   if (tWeight !== null) props['T Weight '] = { number: tWeight };
 
-  if (ex.movement) props['Movement'] = { select: { name: ex.movement } };
+  if (ex.movement != null && ex.movement !== '') {
+    // movement may arrive as a string or string[]; always write as multi_select
+    const movements = Array.isArray(ex.movement) ? ex.movement : [ex.movement];
+    const filtered = movements.filter(Boolean);
+    if (filtered.length > 0) {
+      props['Movement'] = { multi_select: filtered.map((name) => ({ name })) };
+    }
+  }
   if (ex.notes) props['Notes'] = { rich_text: richText(ex.notes) };
 
   if (header.date) props['Date'] = { date: { start: header.date } };
