@@ -24,7 +24,7 @@ function defaultHeader(sessionType) {
 }
 
 function emptyExercise() {
-  return { exercise: '', sets: '', reps: '', tWeight: '', cWeight: '', rpe: '', notes: '', superset: null, loadIntensity: null };
+  return { exercise: '', sets: '', reps: '', tWeight: '', cWeight: '', rpe: '', notes: '', superset: null, loadIntensity: null, movement: null };
 }
 
 function emptyClimb() {
@@ -42,6 +42,7 @@ function libraryToCards(items) {
     notes: '',
     superset: item.superset ?? null,
     loadIntensity: item.loadIntensity ?? null,
+    movement: item.movement ?? null,
   }));
 }
 

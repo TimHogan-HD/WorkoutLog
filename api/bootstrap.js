@@ -36,6 +36,7 @@ function mapLibraryItem(page) {
       superset: getRichText(p, 'Superset') || getSelect(p, 'Superset') || null,
       tempo: getRichText(p, 'Tempo') || null,
       category: getSelect(p, 'Category') || getMultiSelect(p, 'Category').join(', ') || null,
+      movement: getSelect(p, 'Movement') ?? getMultiSelect(p, 'Movement')?.[0] ?? null,
     },
   };
 }
