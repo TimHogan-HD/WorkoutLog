@@ -87,7 +87,7 @@ function buildExerciseProperties(ex, header) {
   const tWeight = safeNumber(ex.tWeight);
   if (tWeight !== null) props['T Weight '] = { number: tWeight };
 
-  if (ex.movement != null && ex.movement !== '') {
+  if (ex.movement != null && ex.movement !== '' && (!Array.isArray(ex.movement) || ex.movement.length > 0)) {
     // movement may arrive as a string or string[]; always write as multi_select
     const movements = Array.isArray(ex.movement) ? ex.movement : [ex.movement];
     const filtered = movements.filter(Boolean);
