@@ -36,7 +36,12 @@ function mapLibraryItem(page) {
       superset: getRichText(p, 'Superset') || getSelect(p, 'Superset') || null,
       tempo: getRichText(p, 'Tempo') || null,
       category: getSelect(p, 'Category') || getMultiSelect(p, 'Category').join(', ') || null,
-      movement: getSelect(p, 'Movement') ?? getMultiSelect(p, 'Movement')?.[0] ?? null,
+      movement: (() => {
+        const multi = getMultiSelect(p, 'Movement');
+        if (multi.length > 0) return multi;
+        const sel = getSelect(p, 'Movement');
+        return sel ? [sel] : null;
+      })(),
     },
   };
 }

@@ -121,7 +121,14 @@ export default function App() {
     setSubmitSuccess(false);
 
     try {
-      await postLog({ header, exercises: cards });
+      // Derive movement from library at submit time to avoid stale card state
+      const exercises = cards.map((card) => ({
+        ...card,
+        movement: card.exercise && card.exercise in exerciseMovementMap
+          ? exerciseMovementMap[card.exercise]
+          : (card.movement ?? null),
+      }));
+      await postLog({ header, exercises });
       setSubmitSuccess(true);
       // Reset form: deselect session and reset header to today's defaults
       setSelectedSession(null);
@@ -143,6 +150,16 @@ export default function App() {
         .filter((v, i, a) => a.indexOf(v) === i)
         .sort()
     : [];
+
+  // Map exercise name → movement for lookup at submit time
+  const exerciseMovementMap = bootstrapData
+    ? Object.values(bootstrapData.library)
+        .flat()
+        .reduce((acc, item) => {
+          if (item.exercise) acc[item.exercise] = item.movement ?? null;
+          return acc;
+        }, {})
+    : {};
 
   const history = bootstrapData?.history ?? {};
 
