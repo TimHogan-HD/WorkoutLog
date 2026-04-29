@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Switch, Route, Link } from 'wouter';
 import SessionBar from './components/SessionBar.jsx';
 import HeaderFields from './components/HeaderFields.jsx';
 import ExerciseCard from './components/ExerciseCard.jsx';
 import ClimbCard from './components/ClimbCard.jsx';
 import { fetchBootstrap, postLog } from './lib/api.js';
+import Charts from './pages/Charts.jsx';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -47,6 +49,17 @@ function libraryToCards(items) {
 }
 
 export default function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') setMenuOpen(false);
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [menuOpen]);
+
   const [bootstrapData, setBootstrapData] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -182,10 +195,19 @@ export default function App() {
     );
   }
 
-  return (
+  const logger = (
     <div className="app">
       <header className="app-header">
         <h1 className="app-title">Workout Logger</h1>
+        <button
+          className="hamburger-btn"
+          aria-label="Open menu"
+          onClick={() => setMenuOpen(true)}
+        >
+          <span className="hamburger-bar" />
+          <span className="hamburger-bar" />
+          <span className="hamburger-bar" />
+        </button>
       </header>
 
       <main className="app-main">
@@ -245,5 +267,34 @@ export default function App() {
         )}
       </main>
     </div>
+  );
+
+  return (
+    <>
+      <Switch>
+        <Route path="/charts"><Charts /></Route>
+        <Route>{logger}</Route>
+      </Switch>
+
+      {menuOpen && (
+        <div className="nav-overlay" role="dialog" aria-modal="true" aria-label="Navigation menu">
+          <button
+            className="nav-overlay-close"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+          >
+            ✕
+          </button>
+          <nav className="nav-overlay-links">
+            <Link href="/" className="nav-overlay-link" onClick={() => setMenuOpen(false)}>
+              Logger
+            </Link>
+            <Link href="/charts" className="nav-overlay-link" onClick={() => setMenuOpen(false)}>
+              Charts
+            </Link>
+          </nav>
+        </div>
+      )}
+    </>
   );
 }
