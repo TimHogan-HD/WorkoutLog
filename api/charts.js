@@ -3,6 +3,7 @@ import {
   getSelect,
   getMultiSelect,
   getNumber,
+  getRichText,
   getDate,
 } from './_notion.js';
 
@@ -22,14 +23,14 @@ const PROGRESS_EXERCISES = new Set([
 
 // Returns ISO week string in YYYY-WWW format (e.g. "2026-W03")
 function toISOWeek(dateStr) {
-  // Use noon to avoid DST-induced date shifts
-  const d = new Date(dateStr + 'T12:00:00');
-  const day = d.getDay() || 7; // Monday=1 … Sunday=7
+  // Use UTC to keep week calculations stable across DST transitions
+  const d = new Date(dateStr + 'T12:00:00Z');
+  const day = d.getUTCDay() || 7; // Monday=1 … Sunday=7
   // Shift to nearest Thursday (ISO week is defined by its Thursday)
-  d.setDate(d.getDate() + 4 - day);
-  const yearStart = new Date(d.getFullYear(), 0, 1);
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1, 12, 0, 0));
   const weekNo = Math.ceil((((d - yearStart) / MS_PER_DAY) + 1) / 7);
-  return `${d.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
 function buildProgressTracker(pages) {
@@ -37,7 +38,7 @@ function buildProgressTracker(pages) {
   const groups = {};
   for (const page of pages) {
     const p = page.properties || {};
-    const name = getSelect(p, 'Exercise Name');
+    const name = getSelect(p, 'Exercise Name') ?? getRichText(p, 'Exercise Name');
     if (!name || !PROGRESS_EXERCISES.has(name)) continue;
 
     const dateStr = getDate(p, 'Date');
@@ -114,7 +115,7 @@ export default async function handler(req, res) {
     const volumeByWeek = buildVolumeByWeek(pages);
     const climbSessions = buildClimbSessions(pages);
 
-    return res.status(200).json({ progressTracker, volumeByWeek, climbSessions });
+    return res.status(200).json({ ok: true, progressTracker, volumeByWeek, climbSessions });
   } catch (err) {
     console.error('[charts] error:', err);
     return res.status(500).json({ ok: false, error: 'Failed to fetch chart data' });
