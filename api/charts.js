@@ -9,6 +9,8 @@ import {
 // Same Exercise Log data source as bootstrap.js
 const EXERCISE_LOG_DB_ID = '2cbdfa46-a6ad-4be1-b174-67d629e513dc';
 
+const MS_PER_DAY = 86400000;
+
 const PROGRESS_EXERCISES = new Set([
   'Weighted Pull-ups',
   'Bulgarian Split Squat',
@@ -26,7 +28,7 @@ function toISOWeek(dateStr) {
   // Shift to nearest Thursday (ISO week is defined by its Thursday)
   d.setDate(d.getDate() + 4 - day);
   const yearStart = new Date(d.getFullYear(), 0, 1);
-  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  const weekNo = Math.ceil((((d - yearStart) / MS_PER_DAY) + 1) / 7);
   return `${d.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
