@@ -28,7 +28,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Never cache API calls
+  // Never cache API calls (including /api/charts)
   if (url.pathname.startsWith('/api/')) return;
 
   // For navigation requests, serve shell from cache (app shell pattern)

@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Switch, Route, Link } from 'wouter';
 import SessionBar from './components/SessionBar.jsx';
 import HeaderFields from './components/HeaderFields.jsx';
 import ExerciseCard from './components/ExerciseCard.jsx';
 import ClimbCard from './components/ClimbCard.jsx';
 import { fetchBootstrap, postLog } from './lib/api.js';
+import Charts from './pages/Charts.jsx';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -47,6 +49,60 @@ function libraryToCards(items) {
 }
 
 export default function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const hamburgerRef = useRef(null);
+  const closeButtonRef = useRef(null);
+
+  // Keyboard handling: Escape closes, Tab is trapped inside overlay
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    // Move focus to close button when overlay opens
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      // Trap focus: collect all focusable elements inside the overlay
+      const overlay = closeButtonRef.current?.closest('.nav-overlay');
+      if (!overlay) return;
+      const focusable = Array.from(
+        overlay.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [menuOpen]);
+
+  // Restore focus to hamburger button when overlay closes
+  const prevMenuOpen = useRef(false);
+  useEffect(() => {
+    if (prevMenuOpen.current && !menuOpen) {
+      hamburgerRef.current?.focus();
+    }
+    prevMenuOpen.current = menuOpen;
+  }, [menuOpen]);
+
   const [bootstrapData, setBootstrapData] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -182,10 +238,23 @@ export default function App() {
     );
   }
 
-  return (
+  const logger = (
     <div className="app">
       <header className="app-header">
         <h1 className="app-title">Workout Logger</h1>
+        <button
+          ref={hamburgerRef}
+          type="button"
+          className="hamburger-btn"
+          aria-label="Open menu"
+          aria-expanded={menuOpen}
+          aria-controls="nav-overlay"
+          onClick={() => setMenuOpen(true)}
+        >
+          <span className="hamburger-bar" />
+          <span className="hamburger-bar" />
+          <span className="hamburger-bar" />
+        </button>
       </header>
 
       <main className="app-main">
@@ -245,5 +314,36 @@ export default function App() {
         )}
       </main>
     </div>
+  );
+
+  return (
+    <>
+      <Switch>
+        <Route path="/charts"><Charts /></Route>
+        <Route>{logger}</Route>
+      </Switch>
+
+      {menuOpen && (
+        <div id="nav-overlay" className="nav-overlay" role="dialog" aria-modal="true" aria-label="Navigation menu">
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className="nav-overlay-close"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+          >
+            ✕
+          </button>
+          <nav className="nav-overlay-links">
+            <Link href="/" className="nav-overlay-link" onClick={() => setMenuOpen(false)}>
+              Logger
+            </Link>
+            <Link href="/charts" className="nav-overlay-link" onClick={() => setMenuOpen(false)}>
+              Charts
+            </Link>
+          </nav>
+        </div>
+      )}
+    </>
   );
 }
