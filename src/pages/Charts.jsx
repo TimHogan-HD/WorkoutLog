@@ -28,8 +28,19 @@ const LINE_COLORS = [
   '#42f5a1', // teal
 ];
 
+const CHART_HEIGHT = 520;
+
+const TICK_STYLE = {
+  fill: '#888',
+  fontSize: 11,
+  fontFamily: 'DM Mono, Courier New, monospace',
+};
+
+// Append noon time so the YYYY-MM-DD string is parsed in local timezone
+// without UTC shifting (avoids off-by-one-day on dates near midnight).
 function formatXDate(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00');
+  const normalized = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
+  const d = new Date(normalized);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
@@ -69,13 +80,7 @@ export default function Charts() {
   }, []);
 
   const tickInterval =
-    chartData && chartData.length > 6 ? Math.ceil(chartData.length / 6) - 1 : 0;
-
-  const TICK_STYLE = {
-    fill: '#888',
-    fontSize: 11,
-    fontFamily: 'DM Mono, Courier New, monospace',
-  };
+    chartData && chartData.length > 6 ? Math.ceil(chartData.length / 6) : 0;
 
   return (
     <div className="app">
@@ -89,7 +94,7 @@ export default function Charts() {
           {error && <p className="charts-status charts-status--error">{error}</p>}
           {chartData && (
             <div className="charts-chart-wrap">
-              <ResponsiveContainer width="100%" height={520}>
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                 <LineChart
                   data={chartData}
                   margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
