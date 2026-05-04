@@ -31,7 +31,7 @@ const LINE_COLORS = [
   '#42f5a1', // teal
 ];
 
-const MOVEMENTS = ['Pull', 'Push', 'Hinge', 'Core', 'Legs', 'Climb'];
+const MOVEMENTS = ['Pull', 'Push', 'Hinge', 'Core', 'Legs'];
 
 const MOVEMENT_COLORS = {
   Pull:  '#7c5544',
@@ -39,11 +39,12 @@ const MOVEMENT_COLORS = {
   Hinge: '#9b59b6',
   Core:  '#e2b714',
   Legs:  '#e67e22',
-  Climb: '#e74c3c',
 };
 
 const CHART_HEIGHT = 520;
 const MAX_VISIBLE_TICKS = 6;
+// Limit bar charts to this many of the most-recent weeks so bars stay wide enough to read.
+const VOLUME_WEEKS_WINDOW = 12;
 
 const TICK_STYLE = {
   fill: '#888',
@@ -198,15 +199,11 @@ export default function Charts({ onMenuOpen }) {
       ? Math.max(0, Math.ceil(chartData.length / MAX_VISIBLE_TICKS) - 1)
       : 0;
 
-  const volTickInterval =
-    volumeData && volumeData.length > MAX_VISIBLE_TICKS
-      ? Math.max(0, Math.ceil(volumeData.length / MAX_VISIBLE_TICKS) - 1)
-      : 0;
-
-  const cumTickInterval =
-    cumulativeData && cumulativeData.length > MAX_VISIBLE_TICKS
-      ? Math.max(0, Math.ceil(cumulativeData.length / MAX_VISIBLE_TICKS) - 1)
-      : 0;
+  // Slice to the most-recent weeks window so bars remain wide enough to read on mobile.
+  // Cumulative values are correct because computeCumulativeVolume ran over the full history;
+  // we only trim the displayed window here.
+  const volDisplayData = volumeData ? volumeData.slice(-VOLUME_WEEKS_WINDOW) : null;
+  const cumDisplayData = cumulativeData ? cumulativeData.slice(-VOLUME_WEEKS_WINDOW) : null;
 
   return (
     <div className="app">
@@ -297,18 +294,21 @@ export default function Charts({ onMenuOpen }) {
           <h2 className="charts-section-title">Volume Tracker</h2>
           {loading && <p className="charts-status">Loading…</p>}
           {error && <p className="charts-status charts-status--error">{error}</p>}
-          {volumeData && volumeData.length > 0 && (
+          {volDisplayData && volDisplayData.length > 0 && (
             <div className="charts-chart-wrap">
               <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                 <BarChart
-                  data={volumeData}
+                  data={volDisplayData}
                   margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#2e2e2e" />
                   <XAxis
                     dataKey="week"
                     tickFormatter={formatWeekTick}
-                    interval={volTickInterval}
+                    interval={Math.max(
+                      0,
+                      Math.ceil(volDisplayData.length / MAX_VISIBLE_TICKS) - 1,
+                    )}
                     tick={TICK_STYLE}
                     stroke="#2e2e2e"
                   />
@@ -338,18 +338,21 @@ export default function Charts({ onMenuOpen }) {
           <h2 className="charts-section-title">Cumulative Volume</h2>
           {loading && <p className="charts-status">Loading…</p>}
           {error && <p className="charts-status charts-status--error">{error}</p>}
-          {cumulativeData && cumulativeData.length > 0 && (
+          {cumDisplayData && cumDisplayData.length > 0 && (
             <div className="charts-chart-wrap">
               <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                 <BarChart
-                  data={cumulativeData}
+                  data={cumDisplayData}
                   margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#2e2e2e" />
                   <XAxis
                     dataKey="week"
                     tickFormatter={formatWeekTick}
-                    interval={cumTickInterval}
+                    interval={Math.max(
+                      0,
+                      Math.ceil(cumDisplayData.length / MAX_VISIBLE_TICKS) - 1,
+                    )}
                     tick={TICK_STYLE}
                     stroke="#2e2e2e"
                   />
