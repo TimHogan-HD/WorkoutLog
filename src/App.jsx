@@ -319,7 +319,7 @@ export default function App() {
   return (
     <>
       <Switch>
-        <Route path="/charts"><Charts /></Route>
+        <Route path="/charts"><Charts onMenuOpen={() => setMenuOpen(true)} /></Route>
         <Route>{logger}</Route>
       </Switch>
 
