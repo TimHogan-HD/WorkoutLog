@@ -51,10 +51,12 @@ function pivotProgressTracker(rows) {
     if (!byDate[date]) byDate[date] = { date };
     byDate[date][exerciseName] = maxTWeight;
   }
-  return Object.values(byDate).sort((a, b) => (a.date < b.date ? -1 : 1));
+  return Object.values(byDate).sort((a, b) =>
+    a.date < b.date ? -1 : a.date > b.date ? 1 : 0,
+  );
 }
 
-export default function Charts() {
+export default function Charts({ onMenuOpen }) {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -66,6 +68,10 @@ export default function Charts() {
         return r.json();
       })
       .then(json => {
+        // Check the API-level ok flag (may be false on HTTP 200 error responses)
+        if (json.ok === false) {
+          throw new Error(json.error || 'API returned an error');
+        }
         const rows = Array.isArray(json.progressTracker)
           ? json.progressTracker
           : Array.isArray(json)
@@ -80,15 +86,29 @@ export default function Charts() {
       });
   }, []);
 
+  // Recharts interval={n} skips n ticks between labels, so visible count ≈ len / (n+1).
+  // Subtract 1 to convert "desired label count" to the recharts interval value.
   const tickInterval =
     chartData && chartData.length > MAX_VISIBLE_TICKS
-      ? Math.ceil(chartData.length / MAX_VISIBLE_TICKS)
+      ? Math.max(0, Math.ceil(chartData.length / MAX_VISIBLE_TICKS) - 1)
       : 0;
 
   return (
     <div className="app">
       <header className="app-header">
         <h1 className="app-title">Charts</h1>
+        {onMenuOpen && (
+          <button
+            type="button"
+            className="hamburger-btn"
+            aria-label="Open menu"
+            onClick={onMenuOpen}
+          >
+            <span className="hamburger-bar" />
+            <span className="hamburger-bar" />
+            <span className="hamburger-bar" />
+          </button>
+        )}
       </header>
       <main className="app-main">
         <section className="charts-section">
