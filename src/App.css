@@ -483,30 +483,33 @@ input[type='number'] {
   color: var(--accent);
 }
 
-/* ── Charts placeholder ─────────────────────────────────────────────────── */
-.charts-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  min-height: 40dvh;
+/* ── Charts section ─────────────────────────────────────────────────────── */
+.charts-section {
+  padding: 1rem 1rem 2rem;
 }
 
-.charts-coming-soon {
-  font-size: 0.9rem;
+.charts-section-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+
+.charts-status {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  padding: 2rem 0;
   letter-spacing: 0.05em;
 }
 
-.charts-back-link {
-  font-size: 0.8rem;
-  color: var(--accent);
-  text-decoration: none;
-  letter-spacing: 0.06em;
-  transition: color 0.15s;
+.charts-status--error {
+  color: var(--error);
 }
 
-.charts-back-link:hover {
-  color: var(--accent-dim);
+.charts-chart-wrap {
+  width: 100%;
+  min-height: 300px;
+  overflow: hidden;
 }
