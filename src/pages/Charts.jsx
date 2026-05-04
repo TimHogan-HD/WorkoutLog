@@ -29,6 +29,7 @@ const LINE_COLORS = [
 ];
 
 const CHART_HEIGHT = 520;
+const MAX_VISIBLE_TICKS = 6;
 
 const TICK_STYLE = {
   fill: '#888',
@@ -80,7 +81,9 @@ export default function Charts() {
   }, []);
 
   const tickInterval =
-    chartData && chartData.length > 6 ? Math.ceil(chartData.length / 6) : 0;
+    chartData && chartData.length > MAX_VISIBLE_TICKS
+      ? Math.ceil(chartData.length / MAX_VISIBLE_TICKS)
+      : 0;
 
   return (
     <div className="app">
@@ -144,6 +147,8 @@ export default function Charts() {
                       stroke={LINE_COLORS[i]}
                       dot={false}
                       strokeWidth={2}
+                      // connectNulls={false} keeps lines broken for missing dates
+                      // rather than interpolating through gaps (avoids misleading trends)
                       connectNulls={false}
                     />
                   ))}
