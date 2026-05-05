@@ -187,7 +187,7 @@ export default function Charts({ onMenuOpen }) {
 
         const climbRows = Array.isArray(json.climbSessions) ? json.climbSessions : [];
         const filteredClimb = climbRows
-          .filter(r => r.date && typeof r.maxRPE === 'number')
+          .filter(r => r.date && Number.isFinite(r.maxRPE))
           .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
         setClimbData(filteredClimb);
 
