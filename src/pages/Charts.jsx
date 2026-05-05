@@ -128,6 +128,8 @@ function pivotProgressTracker(rows) {
 }
 
 // Convert a "YYYY-MM-DD" date string to an ISO week string "YYYY-W##".
+// ISO 8601: weeks start on Monday; the week containing the year's first Thursday
+// is week 1. The Thursday of a given week determines which ISO year it belongs to.
 function dateToISOWeekStr(dateStr) {
   const d = new Date(`${dateStr}T12:00:00`);
   // Thursday of the week determines the ISO year and week number.
@@ -138,12 +140,13 @@ function dateToISOWeekStr(dateStr) {
   const jan4 = new Date(year, 0, 4);
   const jan4Thu = new Date(jan4);
   jan4Thu.setDate(jan4.getDate() + (4 - (jan4.getDay() || 7)));
-  const weekNo = 1 + Math.round((thu - jan4Thu) / (7 * 24 * 3600 * 1000));
+  const weekNo = 1 + Math.floor((thu - jan4Thu) / (7 * 24 * 3600 * 1000));
   return `${year}-W${String(weekNo).padStart(2, '0')}`;
 }
 
-// Pivot climb sessions into one object per ISO week, summing RPE.
-// Omits weeks where total RPE is zero.
+// Pivot climb sessions into one object per ISO week, summing maxRPE across all
+// sessions in that week. Input rows: { date: 'YYYY-MM-DD', maxRPE: number }.
+// Returns sorted array of { week: 'YYYY-W##', rpeSum: number }, omitting zero weeks.
 function pivotClimbByWeek(rows) {
   const byWeek = {};
   for (const { date, maxRPE } of rows) {
@@ -156,7 +159,8 @@ function pivotClimbByWeek(rows) {
     .filter(row => row.rpeSum > 0);
 }
 
-// Add a stackTotal field (sum of all movement values) to each row for stacked-bar total labels.
+// Add a stackTotal field to each row equal to the sum of all MOVEMENTS values.
+// Used by stacked bar charts to render a single total label at the top of each stack.
 function addStackTotals(rows) {
   return rows.map(row => ({
     ...row,
