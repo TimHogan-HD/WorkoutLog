@@ -229,12 +229,18 @@ export default function Charts({ onMenuOpen }) {
           </button>
         )}
       </header>
-      <main className="app-main">
+      <main className="app-main" aria-busy={loading}>
+        {loading && (
+          <p className="charts-loading-announce" role="status">
+            Loading charts…
+          </p>
+        )}
         {error && (
           <p className="charts-error-banner" role="alert">
             {error}
           </p>
         )}
+        {!error && (
         <div className="charts-grid">
         <section className="charts-section">
           <h2 className="charts-section-title">Progress Tracker</h2>
@@ -429,6 +435,7 @@ export default function Charts({ onMenuOpen }) {
           )}
         </section>
         </div>
+        )}
       </main>
     </div>
   );

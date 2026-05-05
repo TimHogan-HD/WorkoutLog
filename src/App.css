@@ -553,7 +553,7 @@ input[type='number'] {
 /* ── Charts skeleton ─────────────────────────────────────────────────────── */
 .charts-skeleton {
   width: 100%;
-  height: 280px;
+  height: 520px;
   border-radius: var(--radius);
   background: linear-gradient(
     90deg,
@@ -563,6 +563,15 @@ input[type='number'] {
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.charts-loading-announce {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 @keyframes skeleton-shimmer {
