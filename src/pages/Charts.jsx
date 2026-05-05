@@ -127,6 +127,43 @@ function pivotProgressTracker(rows) {
   );
 }
 
+// Convert a "YYYY-MM-DD" date string to an ISO week string "YYYY-W##".
+function dateToISOWeekStr(dateStr) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  // Thursday of the week determines the ISO year and week number.
+  const thu = new Date(d);
+  thu.setDate(d.getDate() + (4 - (d.getDay() || 7)));
+  const year = thu.getFullYear();
+  // Thursday of ISO week 1 for the given year.
+  const jan4 = new Date(year, 0, 4);
+  const jan4Thu = new Date(jan4);
+  jan4Thu.setDate(jan4.getDate() + (4 - (jan4.getDay() || 7)));
+  const weekNo = 1 + Math.round((thu - jan4Thu) / (7 * 24 * 3600 * 1000));
+  return `${year}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+// Pivot climb sessions into one object per ISO week, summing RPE.
+// Omits weeks where total RPE is zero.
+function pivotClimbByWeek(rows) {
+  const byWeek = {};
+  for (const { date, maxRPE } of rows) {
+    const week = dateToISOWeekStr(date);
+    if (!byWeek[week]) byWeek[week] = { week, rpeSum: 0 };
+    byWeek[week].rpeSum += maxRPE;
+  }
+  return Object.values(byWeek)
+    .sort((a, b) => (a.week < b.week ? -1 : a.week > b.week ? 1 : 0))
+    .filter(row => row.rpeSum > 0);
+}
+
+// Add a stackTotal field (sum of all movement values) to each row for stacked-bar total labels.
+function addStackTotals(rows) {
+  return rows.map(row => ({
+    ...row,
+    stackTotal: MOVEMENTS.reduce((sum, m) => sum + (row[m] || 0), 0),
+  }));
+}
+
 // Pivot volumeByWeek rows into one object per week, keyed by movement.
 // Weeks where all movements are 0 are removed.
 function pivotVolumeByWeek(rows) {
@@ -182,14 +219,12 @@ export default function Charts({ onMenuOpen }) {
 
         const volRows = Array.isArray(json.volumeByWeek) ? json.volumeByWeek : [];
         const pivoted = pivotVolumeByWeek(volRows);
-        setVolumeData(pivoted);
-        setCumulativeData(computeCumulativeVolume(pivoted));
+        setVolumeData(addStackTotals(pivoted));
+        setCumulativeData(addStackTotals(computeCumulativeVolume(pivoted)));
 
         const climbRows = Array.isArray(json.climbSessions) ? json.climbSessions : [];
-        const filteredClimb = climbRows
-          .filter(r => r.date && Number.isFinite(r.maxRPE))
-          .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-        setClimbData(filteredClimb);
+        const filteredClimb = climbRows.filter(r => r.date && Number.isFinite(r.maxRPE));
+        setClimbData(pivotClimbByWeek(filteredClimb));
 
         setLoading(false);
       })
@@ -295,7 +330,8 @@ export default function Charts({ onMenuOpen }) {
                       type="monotone"
                       dataKey={ex}
                       stroke={LINE_COLORS[i]}
-                      dot={false}
+                      dot={{ r: 3, fill: LINE_COLORS[i], strokeWidth: 0 }}
+                      activeDot={{ r: 5 }}
                       strokeWidth={2}
                       // connectNulls={false} keeps lines broken for missing dates
                       // rather than interpolating through gaps (avoids misleading trends)
@@ -335,14 +371,16 @@ export default function Charts({ onMenuOpen }) {
                     labelFormatter={formatWeekTick}
                   />
                   <Legend verticalAlign="bottom" wrapperStyle={LEGEND_STYLE} />
-                  {MOVEMENTS.map(m => (
-                    <Bar key={m} dataKey={m} name={m} fill={MOVEMENT_COLORS[m]}>
-                      <LabelList
-                        dataKey={m}
-                        position="top"
-                        formatter={v => (v > 0 ? v : '')}
-                        style={labelListStyle(m)}
-                      />
+                  {MOVEMENTS.map((m, idx) => (
+                    <Bar key={m} dataKey={m} name={m} fill={MOVEMENT_COLORS[m]} stackId="vol">
+                      {idx === MOVEMENTS.length - 1 && (
+                        <LabelList
+                          dataKey="stackTotal"
+                          position="top"
+                          formatter={v => (v > 0 ? v : '')}
+                          style={{ fill: '#e8e8e8', fontSize: 9, fontFamily: 'DM Mono, Courier New, monospace' }}
+                        />
+                      )}
                     </Bar>
                   ))}
                 </BarChart>
@@ -378,14 +416,16 @@ export default function Charts({ onMenuOpen }) {
                     labelFormatter={formatWeekTick}
                   />
                   <Legend verticalAlign="bottom" wrapperStyle={LEGEND_STYLE} />
-                  {MOVEMENTS.map(m => (
-                    <Bar key={m} dataKey={m} name={m} fill={MOVEMENT_COLORS[m]}>
-                      <LabelList
-                        dataKey={m}
-                        position="top"
-                        formatter={v => (v > 0 ? v : '')}
-                        style={labelListStyle(m)}
-                      />
+                  {MOVEMENTS.map((m, idx) => (
+                    <Bar key={m} dataKey={m} name={m} fill={MOVEMENT_COLORS[m]} stackId="cum">
+                      {idx === MOVEMENTS.length - 1 && (
+                        <LabelList
+                          dataKey="stackTotal"
+                          position="top"
+                          formatter={v => (v > 0 ? v : '')}
+                          style={{ fill: '#e8e8e8', fontSize: 9, fontFamily: 'DM Mono, Courier New, monospace' }}
+                        />
+                      )}
                     </Bar>
                   ))}
                 </BarChart>
@@ -404,13 +444,13 @@ export default function Charts({ onMenuOpen }) {
             <div className="charts-chart-wrap">
               <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                 <BarChart
-                  data={climbData}
+                  data={climbData.slice(-VOLUME_WEEKS_WINDOW)}
                   margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#2e2e2e" />
                   <XAxis
-                    dataKey="date"
-                    tickFormatter={formatXDate}
+                    dataKey="week"
+                    tickFormatter={formatWeekTick}
                     interval={Math.max(
                       0,
                       Math.ceil(climbData.length / MAX_VISIBLE_TICKS) - 1,
@@ -422,13 +462,19 @@ export default function Charts({ onMenuOpen }) {
                     tick={TICK_STYLE}
                     stroke="#2e2e2e"
                     width={40}
-                    domain={[0, 10]}
                   />
                   <Tooltip
                     {...TOOLTIP_STYLE}
-                    labelFormatter={formatXDate}
+                    labelFormatter={formatWeekTick}
                   />
-                  <Bar dataKey="maxRPE" name="Max RPE" fill="#e74c3c" />
+                  <Bar dataKey="rpeSum" name="RPE (Sum)" fill="#e74c3c">
+                    <LabelList
+                      dataKey="rpeSum"
+                      position="top"
+                      formatter={v => (v > 0 ? v : '')}
+                      style={{ fill: '#e74c3c', fontSize: 9, fontFamily: 'DM Mono, Courier New, monospace' }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
