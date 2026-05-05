@@ -213,7 +213,7 @@ export default function Charts({ onMenuOpen }) {
   const cumDisplayData = cumulativeData ? cumulativeData.slice(-VOLUME_WEEKS_WINDOW) : null;
 
   return (
-    <div className="app">
+    <div className="app charts-page">
       <header className="app-header">
         <h1 className="app-title">Charts</h1>
         {onMenuOpen && (
@@ -229,12 +229,23 @@ export default function Charts({ onMenuOpen }) {
           </button>
         )}
       </header>
-      <main className="app-main">
+      <main className="app-main" aria-busy={loading}>
+        {loading && (
+          <p className="charts-loading-announce" role="status">
+            Loading charts…
+          </p>
+        )}
+        {error && (
+          <p className="charts-error-banner" role="alert">
+            {error}
+          </p>
+        )}
+        {!error && (
+        <div className="charts-grid">
         <section className="charts-section">
           <h2 className="charts-section-title">Progress Tracker</h2>
-          {loading && <p className="charts-status">Loading…</p>}
-          {error && <p className="charts-status charts-status--error">{error}</p>}
-          {chartData && (
+          {loading && <div className="charts-skeleton" aria-hidden="true" />}
+          {!loading && !error && chartData && (
             <div className="charts-chart-wrap">
               <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                 <LineChart
@@ -299,9 +310,8 @@ export default function Charts({ onMenuOpen }) {
 
         <section className="charts-section">
           <h2 className="charts-section-title">Volume Tracker</h2>
-          {loading && <p className="charts-status">Loading…</p>}
-          {error && <p className="charts-status charts-status--error">{error}</p>}
-          {volDisplayData && volDisplayData.length > 0 && (
+          {loading && <div className="charts-skeleton" aria-hidden="true" />}
+          {!loading && !error && volDisplayData && volDisplayData.length > 0 && (
             <div className="charts-chart-wrap">
               <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                 <BarChart
@@ -343,9 +353,8 @@ export default function Charts({ onMenuOpen }) {
 
         <section className="charts-section">
           <h2 className="charts-section-title">Cumulative Volume</h2>
-          {loading && <p className="charts-status">Loading…</p>}
-          {error && <p className="charts-status charts-status--error">{error}</p>}
-          {cumDisplayData && cumDisplayData.length > 0 && (
+          {loading && <div className="charts-skeleton" aria-hidden="true" />}
+          {!loading && !error && cumDisplayData && cumDisplayData.length > 0 && (
             <div className="charts-chart-wrap">
               <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                 <BarChart
@@ -387,12 +396,11 @@ export default function Charts({ onMenuOpen }) {
 
         <section className="charts-section">
           <h2 className="charts-section-title">Climb Volume</h2>
-          {loading && <p className="charts-status">Loading…</p>}
-          {error && <p className="charts-status charts-status--error">{error}</p>}
+          {loading && <div className="charts-skeleton" aria-hidden="true" />}
           {!loading && !error && climbData && climbData.length === 0 && (
             <p className="charts-status">No climb sessions yet</p>
           )}
-          {climbData && climbData.length > 0 && (
+          {!loading && !error && climbData && climbData.length > 0 && (
             <div className="charts-chart-wrap">
               <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                 <BarChart
@@ -426,6 +434,8 @@ export default function Charts({ onMenuOpen }) {
             </div>
           )}
         </section>
+        </div>
+        )}
       </main>
     </div>
   );
