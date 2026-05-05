@@ -158,6 +158,7 @@ export default function Charts({ onMenuOpen }) {
   const [chartData, setChartData] = useState(null);
   const [volumeData, setVolumeData] = useState(null);
   const [cumulativeData, setCumulativeData] = useState(null);
+  const [climbData, setClimbData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -183,6 +184,12 @@ export default function Charts({ onMenuOpen }) {
         const pivoted = pivotVolumeByWeek(volRows);
         setVolumeData(pivoted);
         setCumulativeData(computeCumulativeVolume(pivoted));
+
+        const climbRows = Array.isArray(json.climbSessions) ? json.climbSessions : [];
+        const filteredClimb = climbRows
+          .filter(r => r.date && Number.isFinite(r.maxRPE))
+          .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+        setClimbData(filteredClimb);
 
         setLoading(false);
       })
@@ -372,6 +379,48 @@ export default function Charts({ onMenuOpen }) {
                       />
                     </Bar>
                   ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </section>
+
+        <section className="charts-section">
+          <h2 className="charts-section-title">Climb Volume</h2>
+          {loading && <p className="charts-status">Loading…</p>}
+          {error && <p className="charts-status charts-status--error">{error}</p>}
+          {!loading && !error && climbData && climbData.length === 0 && (
+            <p className="charts-status">No climb sessions yet</p>
+          )}
+          {climbData && climbData.length > 0 && (
+            <div className="charts-chart-wrap">
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <BarChart
+                  data={climbData}
+                  margin={{ top: 16, right: 12, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2e2e2e" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={formatXDate}
+                    interval={Math.max(
+                      0,
+                      Math.ceil(climbData.length / MAX_VISIBLE_TICKS) - 1,
+                    )}
+                    tick={TICK_STYLE}
+                    stroke="#2e2e2e"
+                  />
+                  <YAxis
+                    tick={TICK_STYLE}
+                    stroke="#2e2e2e"
+                    width={40}
+                    domain={[0, 10]}
+                  />
+                  <Tooltip
+                    {...TOOLTIP_STYLE}
+                    labelFormatter={formatXDate}
+                  />
+                  <Bar dataKey="maxRPE" name="Max RPE" fill="#e74c3c" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
